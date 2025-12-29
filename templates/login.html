@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập EAUT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-600 to-purple-700 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-3xl shadow-2xl w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-university text-4xl text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Cổng Xem TKB Tuần Sinh Viên EAUT</h1>
+            <p class="text-blue-100 text-sm mt-2">Đăng nhập để xem lịch học</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="bg-red-500/80 text-white p-3 rounded-xl mb-4 text-sm text-center animate-bounce">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/" method="POST" onsubmit="showLoading()">
+            <div class="mb-4">
+                <label class="block text-blue-100 text-sm font-bold mb-2">Mã sinh viên</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-blue-300">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" name="msv" required class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 border border-white/10 text-white placeholder-blue-200 focus:outline-none focus:bg-white/30 transition" placeholder="Nhập MSV...">
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-blue-100 text-sm font-bold mb-2">Mật khẩu</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-blue-300">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" name="password" required class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 border border-white/10 text-white placeholder-blue-200 focus:outline-none focus:bg-white/30 transition" placeholder="Nhập mật khẩu...">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 transition transform hover:scale-105 shadow-lg">
+                ĐĂNG NHẬP
+            </button>
+        </form>
+    </div>
+
+    <div id="loading" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
+        <p class="text-white text-lg font-medium">Đang kết nối hệ thống nhà trường...</p>
+        <p class="text-gray-400 text-sm mt-2">Vui lòng đợi khoảng 5-10 giây</p>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
