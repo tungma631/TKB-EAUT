@@ -13,24 +13,39 @@ from bs4 import BeautifulSoup
 def get_schedule_data(msv, password):
     print(f"🚀 Bắt đầu crawler cho MSV: {msv}")
     
+    # Khởi tạo driver là None để tránh lỗi UnboundLocalError
+    driver = None
+    
     # URL
     URL_LOGIN = "https://sinhvien.eaut.edu.vn/Login.aspx"
     URL_SCHEDULE = "https://sinhvien.eaut.edu.vn/wfrmLichHocSinhVienTinChi.aspx"
 
-    # Cấu hình Headless (Chạy ẩn hoàn toàn)
+    # Cấu hình Chrome
     chrome_options = Options()
-    chrome_options.add_argument("--headless") # <--- QUAN TRỌNG: Chạy ngầm
+    chrome_options.add_argument("--headless") 
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--window-size=1920,1080")
-    if os.environ.get("RENDER"):
+    
+    # Biến kiểm tra môi trường Render
+    is_render = os.environ.get("RENDER")
+
+    if is_render:
+        # Cấu hình đường dẫn Chrome thật trên Render
         chrome_binary_path = "/opt/render/project/.render/chrome/opt/google/chrome/google-chrome"
         chrome_options.binary_location = chrome_binary_path
     
     try:
-        # Nếu ở Render thì dùng Chrome đã cài, nếu ở Local thì dùng ChromeDriverManager
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # --- KHỞI TẠO DRIVER (Đã sửa) ---
+        if is_render:
+            # Trên Render: KHÔNG dùng ChromeDriverManager để tránh lệch version
+            # Selenium 4.x sẽ tự tìm driver tương thích với bản Chrome 143 đã cài
+            driver = webdriver.Chrome(options=chrome_options)
+        else:
+            # Trên máy cá nhân: Dùng ChromeDriverManager cho tiện
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            
         wait = WebDriverWait(driver, 10)
 
         # 1. ĐĂNG NHẬP
@@ -54,10 +69,10 @@ def get_schedule_data(msv, password):
         
         time.sleep(2)
 
-        # Kiểm tra lỗi
+        # Kiểm tra lỗi đăng nhập
         if "không hợp lệ" in driver.page_source:
             print("❌ Sai mật khẩu")
-            return None # Trả về None nếu sai pass
+            return None 
 
         # 2. VÀO LỊCH HỌC
         driver.get(URL_SCHEDULE)
@@ -74,7 +89,7 @@ def get_schedule_data(msv, password):
         
         if not schedule_table: return []
 
-        # Logic Parse (Giữ nguyên logic cũ của bạn)
+        # Logic Parse
         rows = schedule_table.find_all('tr')
         days_template = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"]
         final_data = [{"date": d, "classes": []} for d in days_template]
@@ -91,7 +106,6 @@ def get_schedule_data(msv, password):
                     day_index = (i - 1) if len(cells) > 7 else i
                     if day_index < 0 or day_index >= 7: day_index = 0
                     
-                    # Regex extract
                     subject = content.split("Tiết học:")[0].strip()
                     time_match = re.search(r'Tiết học:?\s*([\d,\-]+)', content)
                     room_match = re.search(r'Phòng:?\s*(.+?)(?=\s+GV|$)', content)
@@ -117,10 +131,11 @@ def get_schedule_data(msv, password):
                     }
                     final_data[day_index]["classes"].append(class_info)
         
-        return final_data # Trả về dữ liệu JSON
+        return final_data
 
     except Exception as e:
         print(f"Lỗi: {e}")
         return None
     finally:
+        # Chỉ quit nếu driver đã được khởi tạo thành công
         if driver: driver.quit()
